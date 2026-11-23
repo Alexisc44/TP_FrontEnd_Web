@@ -23,8 +23,8 @@ export class UsersService {
         return await this.repository.find();
     }
     
-    async create(userId: number, lastname: string, firstname: string, age: number, password: string): Promise<User> {
-            const newUser = await this.repository.create({id: userId, lastname: lastname, firstname: firstname, age: age, password: password});
+    async create(lastname: string, firstname: string, age: number, password: string): Promise<User> {
+            const newUser = await this.repository.create({lastname: lastname, firstname: firstname, age: age, password: password});
             await this.repository.save(newUser);
             return newUser;
         }

@@ -1,28 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { instanceToPlain } from 'class-transformer';
 import { User } from './user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-
-export type MockType<T> = {
-  [P in keyof T]?: jest.Mock<{}>;
-};
-
-export const repositoryMockFactory: () => MockType<Repository<any>> = jest.fn(() => ({
-  findOne: jest.fn(entity => entity),
-}));
 
 describe('UsersController', () => {
   let controller: UsersController;
   let service: UsersService;
 
   beforeEach(async () => {
+    const usersServiceMock = {
+      getAll: jest.fn(),
+      getById: jest.fn(),
+      create: jest.fn(),
+    };
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
-      providers: [UsersService, 
-        { provide: getRepositoryToken(User), useFactory: repositoryMockFactory}
-      ]
+      providers: [{ provide: UsersService, useValue: usersServiceMock }]
     }).compile();
 
     service = module.get<UsersService>(UsersService);
@@ -33,31 +27,55 @@ describe('UsersController', () => {
     expect(controller).toBeDefined();
   });
 
+  it('should let the service generate the user ID', async () => {
+    const expected = Object.assign(new User(1, 'Doe', 'Jane', 23, ''), {
+      password: 'hashed-password',
+    });
+    jest.spyOn(service, 'create').mockResolvedValue(expected);
+
+    await expect(controller.create({
+      firstname: 'Jane',
+      lastname: 'Doe',
+      age: 23,
+      password: 'password',
+    })).resolves.toBe(expected);
+
+    expect(service.create).toHaveBeenCalledWith(
+      'Doe',
+      'Jane',
+      23,
+      expect.stringMatching(/^\$2[aby]\$/),
+    );
+    expect(expected.id).toBe(1);
+  });
+
+  it('should exclude the password from serialized users', () => {
+    const user = Object.assign(new User(1, 'Doe', 'Jane', 23, ''), {
+      password: 'hashed-password',
+    });
+
+    expect(instanceToPlain(user)).not.toHaveProperty('password');
+  });
+
   describe('getAll', () => {
     it('should return an array of users', async () => {
-      const expected = Promise.all([{ 
-        id: 0, 
-        firstname: 'John',
-        lastname: 'Doe',
-        age: 23
-      }]);
-      jest.spyOn(service, 'getAll').mockImplementation(() => expected);
-      expect(await controller.getAll()).toBe(await expected);
+      const expected: User[] = [
+        Object.assign(new User(1, 'Doe', 'John', 23, ''), {
+          password: 'password',
+        }),
+      ];
+      jest.spyOn(service, 'getAll').mockResolvedValue(expected);
+      expect(await controller.getAll()).toBe(expected);
     });
   });
 
   describe('getById', () => {
     it('should return a single user, with the provided id', async () => {
-      const expected = { 
-        id: 0, 
-        firstname: 'John',
-        lastname: 'Doe',
-        age: 23
-      };
-      jest.spyOn(service, 'getById').mockImplementation(id => {
-        return Promise.resolve(id === expected.id ? expected : undefined);
+      const expected = Object.assign(new User(1, 'Doe', 'John', 23, ''), {
+        password: 'password',
       });
-      expect(await controller.getById('0')).toEqual(expected);
+      jest.spyOn(service, 'getById').mockResolvedValue(expected);
+      expect(await controller.getById('1')).toEqual(expected);
     });
   });
 });

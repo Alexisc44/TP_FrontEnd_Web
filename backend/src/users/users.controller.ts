@@ -16,7 +16,6 @@ import { Role } from '../role/role.entity';
 @Controller('users')
 export class UsersController {
 
-    compteur_id = 1;
     constructor(
         private service: UsersService
     ) {}
@@ -57,9 +56,7 @@ export class UsersController {
         }
         const saltOrRounds = 10;
         const hash = await bcrypt.hash(input.password, saltOrRounds);
-        const user = await this.service.create(this.compteur_id,input.lastname, input.firstname, +input.age, hash);
-        this.compteur_id ++;
-        return user;
+        return await this.service.create(input.lastname, input.firstname, +input.age, hash);
     }
 
 @ApiOkResponse({
