@@ -14,79 +14,124 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssociationsService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
-const association_form_entity_1 = require("../association-forms/association-form.entity");
-const association_forms_service_1 = require("../association-forms/association-forms.service");
-const role_entity_1 = require("../roles/role.entity");
-const roles_service_1 = require("../roles/roles.service");
-const user_entity_1 = require("../users/user.entity");
-const users_service_1 = require("../users/users.service");
-const verbal_processes_service_1 = require("../verbal-processes/verbal-processes.service");
-const typeorm_2 = require("typeorm");
-const association_dto_1 = require("./association.dto");
 const association_entity_1 = require("./association.entity");
-const member_association_1 = require("./member.association");
+const users_service_1 = require("../users/users.service");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const role_entity_1 = require("../role/role.entity");
+const association_dto_1 = require("./association.dto");
+const association_member_1 = require("./association.member");
+const minute_entity_1 = require("../minutes/minute.entity");
 let AssociationsService = class AssociationsService {
-    constructor(repository, usersService, associationFormsService, verbalProcessesService, rolesService) {
+    service;
+    repository;
+    roleRepository;
+    minuteRepository;
+    constructor(service, repository, roleRepository, minuteRepository) {
+        this.service = service;
         this.repository = repository;
-        this.usersService = usersService;
-        this.associationFormsService = associationFormsService;
-        this.verbalProcessesService = verbalProcessesService;
-        this.rolesService = rolesService;
-    }
-    async create(name, idUsers, roles, associationFormId, verbalProcessId) {
-        const associationForm = await this.associationFormsService.get(associationFormId);
-        if (!associationForm.financialValidation || !associationForm.financialValidation) {
-            return undefined;
-        }
-        const association = await this.repository.save(this.repository.create({ name, dateOfCreation: new Date().toString() }));
-        const users = await Promise.all(idUsers.map(id => this.usersService.getById(id)));
-        roles.map(role => this.rolesService.create(role, users[roles.indexOf(role)], association));
-        await this.verbalProcessesService.updateAssociation(verbalProcessId, association);
-        return this.repository.save(association);
+        this.roleRepository = roleRepository;
+        this.minuteRepository = minuteRepository;
     }
     async getAllDTO() {
-        const associations = await this.getAll();
-        return Promise.all(associations.map(association => this.buildDTO(association)));
-    }
-    async getAll() {
-        return this.repository.find();
-    }
-    async getMembers(name) {
-        const roles = await this.rolesService.getByAssociation(name);
-        return roles.map(role => new member_association_1.Member(role.user.lastname, role.user.firstname, role.user.age, role.name));
-    }
-    async getDTO(name) {
-        const association = await this.get(name);
-        return this.buildDTO(association);
-    }
-    async buildDTO(association) {
-        const members = await this.getMembers(association.name);
-        return new association_dto_1.AssociationDTO(association.name, association.dateOfCreation, members);
-    }
-    async get(name) {
-        return this.repository.findOne({ name: typeorm_2.Equal(name) });
-    }
-    async update(input, name) {
-        const association = await this.get(name);
-        if (association !== undefined) {
-            association.name = input.name;
+        const associations = await this.repository.find();
+        if (associations.length === 0) {
+            return [];
         }
-        return this.repository.save(association);
+        const roles = await this.roleRepository.find({
+            where: { association: { id: (0, typeorm_2.In)(associations.map(({ id }) => id)) } },
+        });
+        const rolesByAssociation = new Map();
+        for (const role of roles) {
+            const associationId = role.association.id;
+            const associationRoles = rolesByAssociation.get(associationId) ?? [];
+            associationRoles.push(role);
+            rolesByAssociation.set(associationId, associationRoles);
+        }
+        return associations.map((association) => this.toDTO(association, rolesByAssociation.get(association.id) ?? []));
     }
-    async delete(name) {
-        this.repository.delete({ name: name });
+    async getDTOById(assoId) {
+        const association = await this.getById(assoId);
+        const roles = await this.roleRepository.find({
+            where: { association: { id: association.id } },
+        });
+        return this.toDTO(association, roles);
+    }
+    async createDTO(assoId, idUsers, name) {
+        const association = await this.create(assoId, idUsers, name);
+        return this.getDTOById(association.id);
+    }
+    async updateDTO(assoId, idUsers, name) {
+        await this.update(assoId, idUsers, name);
+        return this.getDTOById(assoId);
+    }
+    toDTO(association, roles) {
+        const rolesByUser = new Map();
+        for (const role of roles) {
+            rolesByUser.set(role.user.id, role.name);
+        }
+        const members = association.users.map((user) => new association_member_1.Member(user.lastname, user.firstname, user.age, rolesByUser.get(user.id) ?? null));
+        return new association_dto_1.AssociationsDTO(association.name, members);
+    }
+    async create(assoId, idUsers, name) {
+        let users = [];
+        for (const userId of idUsers) {
+            const user = await this.service.getById(userId);
+            users.push(user);
+        }
+        const newAsso = this.repository.create({ id: assoId, users: users, name: name });
+        return await this.repository.save(newAsso);
+    }
+    async getById(assoId) {
+        const asso = await this.repository.findOneBy({ id: assoId });
+        if (!asso) {
+            throw new common_1.NotFoundException(`Association with ID ${assoId} not found`);
+        }
+        return asso;
+    }
+    async update(assoId, idUsers, name) {
+        const asso = await this.getById(assoId);
+        if (name !== undefined) {
+            asso.name = name;
+        }
+        if (idUsers !== undefined) {
+            const users = [];
+            for (const userId of idUsers) {
+                users.push(await this.service.getById(userId));
+            }
+            asso.users = users;
+        }
+        return await this.repository.save(asso);
+    }
+    async delete(assoId) {
+        const result = await this.repository.delete(assoId);
+        if (result.affected === 0) {
+            throw new common_1.NotFoundException(`Association with ID ${assoId} not found`);
+        }
+        return true;
+    }
+    async getMembers(assoId) {
+        const asso = await this.getById(assoId);
+        return await asso.users;
+    }
+    async getMinutesByAssociation(assoId, sort, order) {
+        if (sort === 'date') {
+            return this.minuteRepository.find({ where: { association: { id: assoId } }, relations: { association: true }, order: { date: order } });
+        }
+        else {
+            return this.minuteRepository.find({ where: { association: { id: assoId } }, relations: { association: true }, order: { id: order } });
+        }
     }
 };
-AssociationsService = __decorate([
-    common_1.Injectable(),
-    __param(0, typeorm_1.InjectRepository(association_entity_1.Association)),
-    __param(4, common_1.Inject(common_1.forwardRef(() => roles_service_1.RolesService))),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
-        users_service_1.UsersService,
-        association_forms_service_1.AssociationFormsService,
-        verbal_processes_service_1.VerbalProcessesService,
-        roles_service_1.RolesService])
-], AssociationsService);
 exports.AssociationsService = AssociationsService;
+exports.AssociationsService = AssociationsService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(1, (0, typeorm_1.InjectRepository)(association_entity_1.Association)),
+    __param(2, (0, typeorm_1.InjectRepository)(role_entity_1.Role)),
+    __param(3, (0, typeorm_1.InjectRepository)(minute_entity_1.Minute)),
+    __metadata("design:paramtypes", [users_service_1.UsersService,
+        typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository])
+], AssociationsService);
 //# sourceMappingURL=associations.service.js.map

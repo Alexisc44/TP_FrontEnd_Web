@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AssociationDTO = void 0;
-class AssociationDTO {
-    constructor(name, dateOfCreation, members) {
+exports.AssociationsDTO = void 0;
+class AssociationsDTO {
+    name;
+    members;
+    constructor(name, members) {
         this.name = name;
-        this.dateOfCreation = dateOfCreation;
         this.members = members;
     }
 }
-exports.AssociationDTO = AssociationDTO;
+exports.AssociationsDTO = AssociationsDTO;
 //# sourceMappingURL=association.dto.js.map

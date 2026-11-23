@@ -11,18 +11,33 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Association = void 0;
 const typeorm_1 = require("typeorm");
+const user_entity_1 = require("../users/user.entity");
 let Association = class Association {
+    id;
+    name;
+    users;
+    constructor(id, users, name) {
+        this.id = id;
+        this.users = users;
+        this.name = name;
+    }
 };
+exports.Association = Association;
 __decorate([
-    typeorm_1.PrimaryColumn(),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
+    __metadata("design:type", Number)
+], Association.prototype, "id", void 0);
+__decorate([
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], Association.prototype, "name", void 0);
 __decorate([
-    typeorm_1.Column(),
-    __metadata("design:type", String)
-], Association.prototype, "dateOfCreation", void 0);
-Association = __decorate([
-    typeorm_1.Entity()
+    (0, typeorm_1.ManyToMany)(() => user_entity_1.User, { eager: true }),
+    (0, typeorm_1.JoinTable)(),
+    __metadata("design:type", Array)
+], Association.prototype, "users", void 0);
+exports.Association = Association = __decorate([
+    (0, typeorm_1.Entity)(),
+    __metadata("design:paramtypes", [Number, Array, String])
 ], Association);
-exports.Association = Association;
 //# sourceMappingURL=association.entity.js.map

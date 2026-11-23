@@ -14,63 +14,70 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
-const typeorm_1 = require("@nestjs/typeorm");
-const role_entity_1 = require("../roles/role.entity");
-const roles_service_1 = require("../roles/roles.service");
-const typeorm_2 = require("typeorm");
 const user_entity_1 = require("./user.entity");
-const bcrypt = require("bcrypt");
+const typeorm_1 = require("@nestjs/typeorm");
+const typeorm_2 = require("typeorm");
+const role_entity_1 = require("../role/role.entity");
+const association_entity_1 = require("../associations/association.entity");
 let UsersService = class UsersService {
-    constructor(repository, rolesService) {
+    repository;
+    repoAssociation;
+    repoRole;
+    constructor(repository, repoAssociation, repoRole) {
         this.repository = repository;
-        this.rolesService = rolesService;
-    }
-    async create(firstname, lastname, age) {
-        const password = 'password';
-        const saltOrRounds = 10;
-        const hash = await bcrypt.hash(password, saltOrRounds);
-        return this.repository.save(this.repository.create({
-            password: hash,
-            firstname,
-            lastname,
-            age
-        }));
-    }
-    async getUsersWithRole(role) {
-        return (await this.rolesService.getByRoleName(role)).map(role => role.user);
-    }
-    async getRolesById(idToFind) {
-        return this.rolesService.getByUser(idToFind);
+        this.repoAssociation = repoAssociation;
+        this.repoRole = repoRole;
     }
     async getAll() {
-        return this.repository.find();
+        return await this.repository.find();
     }
-    async getById(idToFind) {
-        return this.repository.findOne({ id: typeorm_2.Equal(idToFind) });
+    async create(userId, lastname, firstname, age, password) {
+        const newUser = await this.repository.create({ id: userId, lastname: lastname, firstname: firstname, age: age, password: password });
+        await this.repository.save(newUser);
+        return newUser;
     }
-    async updateById(input, idToFind) {
-        const user = await this.getById(idToFind);
-        if (user !== undefined) {
-            user.firstname = input.firstname;
-            user.lastname = input.lastname;
-            user.age = input.age;
+    async getById(userId) {
+        const user = await this.repository.findOneBy({ id: (0, typeorm_2.Equal)(userId) });
+        if (!user) {
+            throw new common_1.NotFoundException(`User with ID ${userId} not found`);
         }
-        return this.repository.save(user);
+        return user;
     }
-    async deleteById(id) {
-        this.repository.delete(await this.getById(id));
+    async update(userId, lastname, firstname, age, password) {
+        const user = await this.getById(userId);
+        if (firstname !== undefined) {
+            user.firstname = firstname;
+        }
+        if (lastname !== undefined) {
+            user.lastname = lastname;
+        }
+        if (age !== undefined) {
+            user.age = age;
+        }
+        if (password !== undefined) {
+            user.password = password;
+        }
+        return await this.repository.save(user);
     }
-    async getAgeAverageById(ids) {
-        return (await this.repository.find({ id: typeorm_2.In(ids) }))
-            .reduce(function (acc, user) { return acc + user.age; }, 0) / ids.length;
+    async delete(userId) {
+        const result = await this.repository.delete(userId);
+        if (result.affected === 0) {
+            throw new common_1.NotFoundException(`User with ID ${userId} not found`);
+        }
+        return true;
+    }
+    async getRolesByUser(userId) {
+        return this.repoRole.find({ where: { user: { id: userId } }, relations: { user: true, association: true }, });
     }
 };
-UsersService = __decorate([
-    common_1.Injectable(),
-    __param(0, typeorm_1.InjectRepository(user_entity_1.User)),
-    __param(1, common_1.Inject(common_1.forwardRef(() => roles_service_1.RolesService))),
-    __metadata("design:paramtypes", [typeorm_2.Repository,
-        roles_service_1.RolesService])
-], UsersService);
 exports.UsersService = UsersService;
+exports.UsersService = UsersService = __decorate([
+    (0, common_1.Injectable)(),
+    __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(1, (0, typeorm_1.InjectRepository)(association_entity_1.Association)),
+    __param(2, (0, typeorm_1.InjectRepository)(role_entity_1.Role)),
+    __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
+        typeorm_2.Repository])
+], UsersService);
 //# sourceMappingURL=users.service.js.map

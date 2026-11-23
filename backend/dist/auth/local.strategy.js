@@ -10,11 +10,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocalStrategy = void 0;
-const passport_local_1 = require("passport-local");
 const passport_1 = require("@nestjs/passport");
-const common_1 = require("@nestjs/common");
+const passport_local_1 = require("passport-local");
 const auth_service_1 = require("./auth.service");
-let LocalStrategy = class LocalStrategy extends passport_1.PassportStrategy(passport_local_1.Strategy) {
+const common_1 = require("@nestjs/common");
+let LocalStrategy = class LocalStrategy extends (0, passport_1.PassportStrategy)(passport_local_1.Strategy) {
+    authService;
     constructor(authService) {
         super();
         this.authService = authService;
@@ -27,9 +28,9 @@ let LocalStrategy = class LocalStrategy extends passport_1.PassportStrategy(pass
         return user;
     }
 };
-LocalStrategy = __decorate([
-    common_1.Injectable(),
+exports.LocalStrategy = LocalStrategy;
+exports.LocalStrategy = LocalStrategy = __decorate([
+    (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], LocalStrategy);
-exports.LocalStrategy = LocalStrategy;
 //# sourceMappingURL=local.strategy.js.map

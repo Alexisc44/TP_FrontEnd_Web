@@ -12,22 +12,43 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserInput = void 0;
 const swagger_1 = require("@nestjs/swagger");
 class UserInput {
+    firstname;
+    lastname;
+    age;
+    password;
 }
+exports.UserInput = UserInput;
 __decorate([
-    swagger_1.ApiProperty(),
+    (0, swagger_1.ApiProperty)({
+        description: 'The firstname of the user',
+        example: "John",
+        type: String,
+    }),
     __metadata("design:type", String)
 ], UserInput.prototype, "firstname", void 0);
 __decorate([
-    swagger_1.ApiProperty(),
+    (0, swagger_1.ApiProperty)({
+        description: 'The lastname of the user',
+        example: "Doe",
+        type: String,
+    }),
     __metadata("design:type", String)
 ], UserInput.prototype, "lastname", void 0);
 __decorate([
-    swagger_1.ApiProperty({
+    (0, swagger_1.ApiProperty)({
         description: 'The age of the user',
         minimum: 18,
         default: 18,
+        type: Number,
     }),
     __metadata("design:type", Number)
 ], UserInput.prototype, "age", void 0);
-exports.UserInput = UserInput;
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'The password of the user',
+        example: "password123",
+        type: String,
+    }),
+    __metadata("design:type", String)
+], UserInput.prototype, "password", void 0);
 //# sourceMappingURL=user.input.js.map

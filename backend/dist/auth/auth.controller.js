@@ -17,24 +17,25 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const auth_service_1 = require("./auth.service");
 let AuthController = class AuthController {
+    authService;
     constructor(authService) {
         this.authService = authService;
     }
-    async login(req) {
-        return this.authService.login(req.user);
+    async login(request) {
+        return this.authService.login(request.user);
     }
 };
+exports.AuthController = AuthController;
 __decorate([
-    common_1.UseGuards(passport_1.AuthGuard('local')),
-    common_1.Post('login'),
-    __param(0, common_1.Request()),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)('local')),
+    (0, common_1.Post)('login'),
+    __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
-AuthController = __decorate([
-    common_1.Controller('auth'),
+exports.AuthController = AuthController = __decorate([
+    (0, common_1.Controller)('auth'),
     __metadata("design:paramtypes", [auth_service_1.AuthService])
 ], AuthController);
-exports.AuthController = AuthController;
 //# sourceMappingURL=auth.controller.js.map

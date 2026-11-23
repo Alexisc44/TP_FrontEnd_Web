@@ -12,29 +12,41 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const typeorm_1 = require("typeorm");
 let User = class User {
+    id;
+    lastname;
+    firstname;
+    age;
+    password;
+    constructor(id, lastname, firstname, age, password) {
+        this.id = id;
+        this.lastname = lastname;
+        this.firstname = firstname;
+        this.age = age;
+    }
 };
+exports.User = User;
 __decorate([
-    typeorm_1.PrimaryGeneratedColumn(),
+    (0, typeorm_1.PrimaryGeneratedColumn)(),
     __metadata("design:type", Number)
 ], User.prototype, "id", void 0);
 __decorate([
-    typeorm_1.Column(),
-    __metadata("design:type", String)
-], User.prototype, "password", void 0);
-__decorate([
-    typeorm_1.Column(),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], User.prototype, "lastname", void 0);
 __decorate([
-    typeorm_1.Column(),
+    (0, typeorm_1.Column)(),
     __metadata("design:type", String)
 ], User.prototype, "firstname", void 0);
 __decorate([
-    typeorm_1.Column(),
+    (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Number)
 ], User.prototype, "age", void 0);
-User = __decorate([
-    typeorm_1.Entity()
+__decorate([
+    (0, typeorm_1.Column)(),
+    __metadata("design:type", String)
+], User.prototype, "password", void 0);
+exports.User = User = __decorate([
+    (0, typeorm_1.Entity)(),
+    __metadata("design:paramtypes", [Number, String, String, Number, String])
 ], User);
-exports.User = User;
 //# sourceMappingURL=user.entity.js.map
