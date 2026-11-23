@@ -1,20 +1,7 @@
-import { Component } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
-
-export class User {
-  constructor(
-    public id: number,
-    public password: string,
-    public lastname: string,
-    public firstname: string,
-    public age: number
-  ) {}
-}
-
-const users: User[] = [
-  new User(0, 'mdp1', 'Doe', 'John', 23),
-  new User(1, 'mdp2', 'Doe', 'Jane', 32)
-];
+import { lastValueFrom, Observable } from 'rxjs';
 
 @Component({
   imports: [MatTableModule],
@@ -22,8 +9,17 @@ const users: User[] = [
   styleUrl: './users-list.scss',
   templateUrl: './users-list.html',
 })
-export class UsersList {
+export class UsersList implements OnInit{
   displayedColumns: string[] = ['id', 'lastname', 'firstname', 'age'];
-  dataSource = users;
-  readonly users = users;
+  dataSource = [];
+  
+  constructor(
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+    ngOnInit() : void {
+      const request: Observable<any> = this.http.get('http://localhost:3000/users', { observe: 'response' });
+      lastValueFrom(request).then(response => {this.dataSource = response.body; this.cdr.detectChanges()});
+  }
 }
