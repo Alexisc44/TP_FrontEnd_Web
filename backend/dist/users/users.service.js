@@ -31,8 +31,8 @@ let UsersService = class UsersService {
     async getAll() {
         return await this.repository.find();
     }
-    async create(userId, lastname, firstname, age, password) {
-        const newUser = await this.repository.create({ id: userId, lastname: lastname, firstname: firstname, age: age, password: password });
+    async create(lastname, firstname, age, password) {
+        const newUser = await this.repository.create({ lastname: lastname, firstname: firstname, age: age, password: password });
         await this.repository.save(newUser);
         return newUser;
     }

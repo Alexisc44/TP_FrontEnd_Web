@@ -3,8 +3,6 @@ import { environment } from '../../environments/environment';
 import { Observable, lastValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
-const base_url: string = 'http://localhost:3000';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -19,7 +17,7 @@ export class ApiHelperService {
   }: {
     endpoint: string;
     queryParams?: any;
-  }): Promise<any> {environment
+  }): Promise<any> {
     return this.request({ endpoint, method: 'GET', queryParams });
   }
 
@@ -72,7 +70,7 @@ export class ApiHelperService {
   }): Promise<any> {
     const methodWanted = method.toLowerCase();
 
-    const url = base_url + endpoint;
+    const url = this.base_url + endpoint;
 
     const requestOptions = {
       params: queryParams,

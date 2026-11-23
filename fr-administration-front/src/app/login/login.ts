@@ -20,10 +20,9 @@ export class Login {
   async login(): Promise<void> {
     const username: string = (document.getElementById('username') as HTMLInputElement).value;
     const password: string = (document.getElementById('password') as HTMLInputElement).value;
-    this.api.post({endpoint: '/auth/login', data: { username, password }}).then(response => this.tokenStorageService.save(response.access_token));
-
-    if (this.tokenStorageService.isLogged()){
-      await this.router.navigate(['/users']);
-    }
+    const response = await this.api.post({endpoint: '/auth/login', data: { username, password }});
+    
+    this.tokenStorageService.save(response.access_token);
+    await this.router.navigate(['/users']);
   }
 }

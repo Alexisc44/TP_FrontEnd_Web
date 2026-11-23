@@ -53,7 +53,6 @@ const user_input_1 = require("./user.input");
 const bcrypt = __importStar(require("bcrypt"));
 let UsersController = class UsersController {
     service;
-    compteur_id = 1;
     constructor(service) {
         this.service = service;
     }
@@ -78,9 +77,7 @@ let UsersController = class UsersController {
         }
         const saltOrRounds = 10;
         const hash = await bcrypt.hash(input.password, saltOrRounds);
-        const user = await this.service.create(this.compteur_id, input.lastname, input.firstname, +input.age, hash);
-        this.compteur_id++;
-        return user;
+        return await this.service.create(input.lastname, input.firstname, +input.age, hash);
     }
     async getById(parameter) {
         const userId = +parameter;
